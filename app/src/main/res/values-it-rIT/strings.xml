@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="title_activity_maps">Mappa</string>
+    <string name="races_tab_name">Corsa</string>
+    <string name="tracking_tab_name">Tracciato</string>
+    <string name="settings">Impostazioni</string>
+    <string name="logout">Esci</string>
+    <string name="distance">Distanza:</string>
+    <string name="best_time">Miglior Tempo:</string>
+    <string name="add_track_dialog_title">Imposta un nome per il nuovo tracciato.\n Massimo 20 caratteri</string>
+    <string name="add_track_dialog_name_hint">Nome</string>
+    <string name="delete_tracks_dialog">Cancellare i Percorsi selezionati?</string>
+    <string name="delete_races_dialog">Cancellare le corse selezionate?</string>
+    <string name="save">Salva</string>
+    <string name="close">Chiudi</string>
+    <string name="delete">Cancella</string>
+    <string name="cancel">Annulla</string>
+    <string name="date">Data:</string>
+    <string name="time">Tempo:</string>
+</resources>
