@@ -14,6 +14,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 
 import it.univaq.byte_predator.shiptracker.Helper.DataCallback;
 import it.univaq.byte_predator.shiptracker.Helper.HelperDatabase;
@@ -34,6 +35,7 @@ public class tracksTable {
     static private String NAME = "Name";
     static private String SYNC = "Sync";
     static private String DELETE = "Del";
+    static private String SERVER = "10.10.0.84";
 
     static public void CREATE(SQLiteDatabase db){
         String sql = "CREATE TABLE "+TABLE+" ( " +
@@ -69,14 +71,14 @@ public class tracksTable {
     static public ArrayList<Track> getTracks(){
         SQLiteDatabase db = HelperDatabase.getInstance().getReadableDatabase();
         ArrayList<Track> r = new ArrayList<>();
-        Cursor cursor = db.query(TABLE, new String[]{ID,NAME}, DELETE+"=0", null, null, null, null, null);
+        Cursor cursor = db.query(TABLE, new String[]{ID,NAME}, DELETE+"=0", null, null, null, NAME, null);
         while (cursor.moveToNext())
             r.add(genTrack(cursor.getLong(0), cursor.getString(1)));
         return r;
     }
 
     static private Track genTrack(long Id, String Name){
-        return new Track(Id, Name, waypointsTable.getBoasByTrack(Id));
+        return new Track(Id, Name, waypointsTable.getWaypointsByTrack(Id), racesTable.getRacesByTrack(Id));
     }
 
     static public ArrayList<Track> getSync(){
@@ -89,44 +91,66 @@ public class tracksTable {
         return r;
     }
 
-    static public long UpdateTrack(Track data){
-        return UpdateTrack(data, false);
+    static public long Save(Track data){
+        return Save(data, false);
     }
 
-    static public long InsertTrack(Track data){
-        return InsertTrack(data, false);
+    static public long Save(Track data, boolean sync){
+        if(getTrack(data.getId()) != null) {
+            return Update(data, sync);
+        }else{
+            return Insert(data, sync);
+        }
     }
 
-    static private long UpdateTrack(Track data, boolean sync){
+    static public long Update(Track data){
+        return Update(data, false);
+    }
+
+    static public long Insert(Track data){
+        return Insert(data, true);
+    }
+
+    static private long Update(Track data, boolean sync){
         SQLiteDatabase db = HelperDatabase.getInstance().getWritableDatabase();
         ContentValues values = new ContentValues();
         values.put(NAME, data.getName());
         values.put(SYNC, sync);
         long id = data.getId();
-        for (Boa boa: data.getBoas()) {
-            waypointsTable.SaveWaypoints(id, boa.getId());
+        Log.w("trackTable", "update: "+String.valueOf(data.getId()));
+        db.update(TABLE, values, ID+" = ?", new String[]{String.valueOf(id)});
+        for (Waypoint waypoint: data.getWaypoints()) {
+            waypointsTable.Save(waypoint, id, sync);
         }
-        return db.update(TABLE, values, ID+" = ?", new String[]{String.valueOf(id)});
+        for (Race race: data.getRaces()) {
+            racesTable.Save(race, id, sync);
+        }
+        return id;
     }
 
-    static private long InsertTrack(Track data, boolean sync){
+    static private long Insert(Track data, boolean sync){
         SQLiteDatabase db = HelperDatabase.getInstance().getWritableDatabase();
         ContentValues values = new ContentValues();
         values.put(NAME, data.getName());
         values.put(SYNC, sync);
+        Log.w("trackTable", "insert: "+String.valueOf(data.getId()));
         long Id = db.insert(TABLE, null, values);
-        ArrayList<Boa> boas = data.getBoas();
-        for(Boa boa: boas){
-            waypointsTable.InsertWaypoint(Id, boa.getId());
+        for(Waypoint waypoint: data.getWaypoints()){
+            waypointsTable.Insert(waypoint, Id, sync);
+        }
+        for(Race race: data.getRaces()){
+            racesTable.Insert(race, Id, sync);
         }
         return Id;
     }
 
-    static public int DeleteTrack(long Id){
+    static public int Delete(long Id){
         SQLiteDatabase db = HelperDatabase.getInstance().getWritableDatabase();
         ContentValues values = new ContentValues();
         values.put(DELETE, true);
         values.put(SYNC, true);
+        waypointsTable.DeleteByTrack(Id);
+        racesTable.DeleteByTrack(Id);
         return db.update(TABLE, values, ID+" = ?", new String[]{String.valueOf(Id)});
     }
 
@@ -135,7 +159,10 @@ public class tracksTable {
     }
 
     static public void getFromServer(final Context context, final DataCallback callback){
-        HelperHTTP.getInstance(context).RequestJSONObject("http://10.10.0.49/get.php?table=tracks", "GET",
+        HashMap<String, String> params = new HashMap<>();
+        params.put("table", "tracks");
+
+        HelperHTTP.getInstance(context).RequestJSONObject("http://"+SERVER+"/get.php", params, "POST",
                 new Response.Listener<JSONObject>() {
                     @Override
                     public void onResponse(JSONObject response) {
@@ -148,39 +175,73 @@ public class tracksTable {
                                 for (int i=0; i<array.length(); i++) {
                                     JSONArray item = array.getJSONArray(i);
                                     Track t;
-                                    if((t = getTrack(item.getLong(0)))!=null){
+                                    if((t = getTrack(item.getLong(0)))!=null){    //Update track
                                         t.setName(item.getString(1));
-                                        JSONArray jboas = item.getJSONArray(3);
-                                        for (int j=0; j < jboas.length(); j++){
-                                            JSONArray boa = jboas.getJSONArray(j);
-                                            Boa b = new Boa(boa.getLong(0),boa.getDouble(1), boa.getDouble(2));
-                                            //TODO: salvare tutte le boe prima
-                                            //boasTable.saveBoa(b);
-                                            t.addBoa(b);
+                                        t.clearWaypoints();
+                                        t.clearRaces();
+                                        JSONArray jwaypoints = item.getJSONArray(3);
+                                        for (int j=0; j < jwaypoints.length(); j++){
+                                            JSONArray waypoint = jwaypoints.getJSONArray(j);
+                                            JSONArray jboas = waypoint.getJSONArray(1);
+                                            Boa b = new Boa(
+                                                    jboas.getLong(0),
+                                                    jboas.getDouble(1),
+                                                    jboas.getDouble(2)
+                                            );
+                                            Waypoint w = new Waypoint(waypoint.getLong(0), b, waypoint.getLong(2));
+                                            //boasTable.SaveBoa(b);                       //ReUpdate boas
+                                            t.addWaypoint(w);
                                         }
-                                        UpdateTrack(t);
+
+
                                         JSONArray jraces = item.getJSONArray(4);
-                                        for (int j=0; j < jraces.length(); j++)
-                                            racesTable.SaveRace(new Race(jraces.getLong(j), new ArrayList<Point>()), t.getId(), true);
-                                        Log.w("trackModel", "update: "+String.valueOf(t.getId()));
-                                    }else{
-                                        ArrayList<Boa> boas = new ArrayList<>();
-                                        JSONArray jboas = item.getJSONArray(3);
-                                        for (int j=0; j < jboas.length(); j++){
-                                            JSONArray boa = jboas.getJSONArray(j);
-                                            Boa b = new Boa(boa.getLong(0),boa.getDouble(1), boa.getDouble(2));
-                                            //TODO: salvare tutte le boe prima
-                                            //boasTable.saveBoa(b);
-                                            boas.add(b);
+                                        for (int j=0; j < jraces.length(); j++) {
+                                            JSONArray jrace = jraces.getJSONArray(j);
+                                            Race race = new Race(
+                                                    jrace.getLong(0),
+                                                    jrace.getInt(1),
+                                                    new ArrayList<Point>()
+                                            );
+                                            t.addRace(race);
                                         }
+
+                                        tracksTable.Update(t);
+                                    }else{                                             //Insert Track
+                                        ArrayList<Waypoint> waypoints = new ArrayList<>();
+
+                                        JSONArray jwaypoints = item.getJSONArray(3);
+                                        for (int j=0; j < jwaypoints.length(); j++){
+                                            JSONArray waypoint = jwaypoints.getJSONArray(j);
+                                            JSONArray jboas = waypoint.getJSONArray(1);
+                                            Boa b = new Boa(
+                                                    jboas.getLong(0),
+                                                    jboas.getDouble(1),
+                                                    jboas.getDouble(2)
+                                            );
+                                            Waypoint w = new Waypoint(waypoint.getLong(0), b, waypoint.getLong(2));
+                                            //boasTable.SaveBoa(b);                       //ReUpdate boas
+                                            waypoints.add(w);
+                                        }
+
+                                        ArrayList<Race> races = new ArrayList<>();
+
+                                        JSONArray jraces = item.getJSONArray(4);
+                                        for (int j=0; j < jraces.length(); j++) {
+                                            JSONArray race = jraces.getJSONArray(j);
+                                            Race tmp = new Race(
+                                                    race.getLong(0),
+                                                    race.getInt(1),
+                                                    new ArrayList<Point>()
+                                            );
+                                            races.add(tmp);
+                                        }
+
                                         t = new Track(item.getLong(0),
                                                 item.getString(1),
-                                                boas);
-                                        InsertTrack(t, true);
-                                        JSONArray jraces = item.getJSONArray(4);
-                                        for (int j=0; j < jraces.length(); j++)
-                                            racesTable.SaveRace(new Race(jraces.getLong(j), new ArrayList<Point>()), t.getId(), true);
-                                        Log.w("trackModel", "insert: "+String.valueOf(t.getId()));
+                                                waypoints,
+                                                races);
+
+                                        tracksTable.Insert(t, false);
                                     }
                                     r.add(t);
                                 }

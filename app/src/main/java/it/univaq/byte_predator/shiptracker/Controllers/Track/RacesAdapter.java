@@ -72,7 +72,6 @@ public class RacesAdapter extends RecyclerView.Adapter<RacesAdapter.ViewHolder> 
     @Override
     public void onBindViewHolder(ViewHolder holder, int position) {
         holder.Id.setText(String.valueOf(data.get(position).getId()));
-        holder.date.setText(data.get(position).getDate());
         Integer iTime = data.get(position).getTime();
         Integer H = iTime/3600;
         Integer M = iTime%3600/60;
@@ -87,14 +86,12 @@ public class RacesAdapter extends RecyclerView.Adapter<RacesAdapter.ViewHolder> 
 
     public class ViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener, View.OnLongClickListener{
         TextView Id;
-        TextView date;
         TextView time;
 
         public ViewHolder(View itemView) {
             super(itemView);
 
             Id = itemView.findViewById(R.id.id);
-            date = itemView.findViewById(R.id.date);
             time = itemView.findViewById(R.id.time);
 
             itemView.setOnClickListener(this);

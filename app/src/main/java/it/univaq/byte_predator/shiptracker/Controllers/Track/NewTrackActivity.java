@@ -24,14 +24,13 @@ import com.google.android.gms.maps.model.PolylineOptions;
 
 import java.util.ArrayList;
 
-import it.univaq.byte_predator.shiptracker.Helper.HelperDatabase;
 import it.univaq.byte_predator.shiptracker.Models.Boa;
 import it.univaq.byte_predator.shiptracker.Models.Track;
 import it.univaq.byte_predator.shiptracker.Models.Waypoint;
 import it.univaq.byte_predator.shiptracker.R;
 import it.univaq.byte_predator.shiptracker.Tables.boasTable;
+import it.univaq.byte_predator.shiptracker.Tables.tracksTable;
 
-import static it.univaq.byte_predator.shiptracker.Tables.tracksTable.InsertTrack;
 
 /**
  * Created by byte-predator on 22/02/18.
@@ -84,7 +83,7 @@ public class NewTrackActivity extends AppCompatActivity implements OnMapReadyCal
         findViewById(R.id.save_track).setOnClickListener(new View.OnClickListener(){
             @Override
             public void onClick(View v) {
-                long id = InsertTrack(track);
+                long id = tracksTable.Insert(track);
                 Log.w("save", String.valueOf(id));
                 Intent returnIntent = new Intent();
                 setResult(1,returnIntent);
@@ -131,14 +130,14 @@ public class NewTrackActivity extends AppCompatActivity implements OnMapReadyCal
         boolean changed = false;
         for(int i=0; i < boas.size(); i++){
             if(marker.equals(boas.get(i).getMarker())){
-                if(track.boasNumber()>0 && track.getBoa(track.boasNumber()-1).getId()==boas.get(i).getId()){
-
-                    track.removeBoa(track.boasNumber()-1);
+                if(track.waypointsNumber()>0 && track.getWaypoint(track.waypointsNumber()-1).getBoa().getId()==boas.get(i).getId()){
+                    //Elimina l'ultimo waypoint
+                    track.removeWaypoint(track.waypointsNumber()-1);
 
                     int counter = 0;
-                    for(int j = 0; j < track.boasNumber(); j++)
-                        if(track.getBoa(j).getId()==boas.get(i).getId()) {
-                            counter++;
+                    for(int j = 0; j < track.waypointsNumber(); j++)
+                        if(track.getWaypoint(j).getBoa().getId()==boas.get(i).getId()) {
+                            counter++;          //Conto se è un waypoint multiplo
                             break;
                         }
                     if(counter==0)
@@ -146,22 +145,23 @@ public class NewTrackActivity extends AppCompatActivity implements OnMapReadyCal
                     else
                         marker.setIcon(BitmapDescriptorFactory.fromBitmap(boa_bitmap_selected));
 
-                    if(track.boasNumber()>0)
+                    if(track.waypointsNumber()>0)
                         for(int j = 0; j < boas.size(); j++)
-                            if(track.getBoa(track.boasNumber()-1).getId() == boas.get(j).getId()){
+                            if(track.getWaypoint(track.waypointsNumber()-1).getBoa().getId() == boas.get(j).getId()){
                                 boas.get(j).getMarker().setIcon(BitmapDescriptorFactory.fromBitmap(boa_bitmap_last));
-                                break;
+                                break;              //Cambio l'icona del penultimo waypoint
                             }
 
-                }else{
+                }else{      //Aggiungo un waypoint
                     marker.setIcon(BitmapDescriptorFactory.fromBitmap(boa_bitmap_last));
-                    track.addBoa(boas.get(i));
+                    Waypoint w = new Waypoint(boas.get(i),track.waypointsNumber()+1);
+                    track.addWaypoint(w);
 
-                    if(track.boasNumber()>1)
+                    if(track.waypointsNumber()>1)
                         for(int j = 0; j < boas.size(); j++)
-                            if(track.getBoa(track.boasNumber()-2).getId() == boas.get(j).getId()){
+                            if(track.getWaypoint(track.waypointsNumber()-2).getBoa().getId() == boas.get(j).getId()){
                                 boas.get(j).getMarker().setIcon(BitmapDescriptorFactory.fromBitmap(boa_bitmap_selected));
-                                break;
+                                break;              //Cambio l'icona del penultimo waypoint
                             }
                 }
                 changed = true;
@@ -172,14 +172,15 @@ public class NewTrackActivity extends AppCompatActivity implements OnMapReadyCal
             if(polyline != null)
                 polyline.remove();
             PolylineOptions polylineOptions = new PolylineOptions();
-            for(int i = 0; i < track.boasNumber(); i++){
-                Boa boa = null;
+            for(int i = 0; i < track.waypointsNumber(); i++){
+                /*Boa boa = null;
                 for(Boa b: boas){
-                    if(b.getId() == track.getBoa(i).getId())
+                    if(b.getId() == track.getWaypoint(i).getBoa().getId())
                         boa = b;
                 }
                 if(boa != null)
-                    polylineOptions.add(boa.getLatLng());
+                    polylineOptions.add(boa.getLatLng());*/
+                polylineOptions.add(track.getWaypoint(i).getBoa().getLatLng());
             }
             polylineOptions.width(4f);
             //polyline.setEndCap(new ButtCap());

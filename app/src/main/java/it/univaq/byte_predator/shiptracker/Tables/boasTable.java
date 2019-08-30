@@ -14,6 +14,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 
 import it.univaq.byte_predator.shiptracker.Helper.DataCallback;
 import it.univaq.byte_predator.shiptracker.Helper.HelperDatabase;
@@ -30,6 +31,7 @@ public class boasTable {
     static public String ID = "Id";
     static public String LATITUDE = "Latitude";
     static public String LONGITUDE = "Longitude";
+    static private String SERVER = "10.10.0.84";
 
 
     static public void CREATE(SQLiteDatabase db){
@@ -70,7 +72,14 @@ public class boasTable {
         return r;
     }
 
-    static public long UpdateBoa(Boa data){
+    static public long Save(Boa data){
+        if(getBoa(data.getId()) != null)
+            return Update(data);
+        else
+            return Insert(data);
+    }
+
+    static public long Update(Boa data){
         SQLiteDatabase db = HelperDatabase.getInstance().getWritableDatabase();
         ContentValues values = new ContentValues();
         values.put(ID, data.getId());
@@ -79,7 +88,7 @@ public class boasTable {
         return db.update(TABLE, values, ID+" = ?", new String[]{String.valueOf(data.getId())});
     }
 
-    static private long InsertBoa(Boa data){
+    static public long Insert(Boa data){
         SQLiteDatabase db = HelperDatabase.getInstance().getWritableDatabase();
         ContentValues values = new ContentValues();
         values.put(ID, data.getId());
@@ -88,7 +97,7 @@ public class boasTable {
         return db.insert(TABLE, null, values);
     }
 
-    static private int DeleteBoa(int Id){
+    static private int Delete(int Id){
         SQLiteDatabase db = HelperDatabase.getInstance().getWritableDatabase();
         return db.delete(TABLE, ID+"= ?", new String[]{String.valueOf(Id)});
     }
@@ -98,12 +107,16 @@ public class boasTable {
     }
 
     static public void getFromServer(final Context context, final DataCallback callback){
-        HelperHTTP.getInstance(context).RequestJSONObject("http://10.10.0.49/get.php?table=boas", "GET",
+        HashMap<String, String> params = new HashMap<>();
+        params.put("table", "boas");
+
+        HelperHTTP.getInstance(context).RequestJSONObject("http://"+SERVER+"/get.php", params, "POST",
                 new Response.Listener<JSONObject>() {
                     @Override
                     public void onResponse(JSONObject response) {
                         ArrayList<Boa> r = new ArrayList<>();
                         try {
+                            Log.w("responseBoa", response.toString());
                             if(response.getInt("error")==0){
                                 JSONArray array = response.getJSONArray("data");
                                 for (int i=0; i<array.length(); i++) {
@@ -112,13 +125,13 @@ public class boasTable {
                                     if((p = getBoa(item.getLong(0)))!=null){
                                         p.setLatitude(item.getDouble(1));
                                         p.setLongitude(item.getDouble(2));
-                                        UpdateBoa(p);
+                                        Update(p);
                                         Log.w("boaModel", "update: "+String.valueOf(p.getId()));
                                     }else{
                                         p = new Boa(item.getLong(0),
                                                 item.getDouble(1),
                                                 item.getDouble(2));
-                                        InsertBoa(p);
+                                        Insert(p);
                                         Log.w("boaModel", "insert: "+String.valueOf(p.getId()));
                                     }
                                     r.add(p);

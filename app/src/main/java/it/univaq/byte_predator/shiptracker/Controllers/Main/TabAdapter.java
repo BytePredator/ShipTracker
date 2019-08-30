@@ -12,18 +12,33 @@ import it.univaq.byte_predator.shiptracker.R;
 
 public class TabAdapter extends FragmentPagerAdapter {
     private Context context;
+    private TracksFragment tracksFragment;
+    private TracesFragment tracesFragment;
 
     public TabAdapter(Context context, FragmentManager fm){
         super(fm);
         this.context = context;
     }
+
+    public TracksFragment getTracksFragment(){
+        if(this.tracksFragment == null)
+            this.tracksFragment = new TracksFragment();
+        return this.tracksFragment;
+    }
+
+    public TracesFragment getTracesFragment(){
+        if(this.tracesFragment == null)
+            this.tracesFragment = new TracesFragment();
+        return this.tracesFragment;
+    }
+
     @Override
     public Fragment getItem(int position) {
         Fragment fragment;
         if(position == 0){
-            fragment = new TracksFragment();
+            fragment = this.getTracksFragment();
         }else{
-            fragment = new TracesFragment();
+            fragment = this.getTracesFragment();
         }
         return fragment;
     }

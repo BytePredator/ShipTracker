@@ -36,6 +36,7 @@ import it.univaq.byte_predator.shiptracker.Controllers.Race.NewRaceActivity;
 import it.univaq.byte_predator.shiptracker.Helper.HelperDatabase;
 import it.univaq.byte_predator.shiptracker.Models.Boa;
 import it.univaq.byte_predator.shiptracker.Models.Race;
+import it.univaq.byte_predator.shiptracker.Models.Waypoint;
 import it.univaq.byte_predator.shiptracker.R;
 import it.univaq.byte_predator.shiptracker.Models.Track;
 import it.univaq.byte_predator.shiptracker.Tables.racesTable;
@@ -94,7 +95,7 @@ public class ViewTrackActivity extends AppCompatActivity implements OnMapReadyCa
                 .findFragmentById(R.id.track_view_map);
         mapFragment.getMapAsync(this);
 
-        data_races = racesTable.getRaces(this.track.getId());
+        data_races = racesTable.getRacesByTrack(this.track.getId());
         races = new RacesAdapter(data_races, this.AMcallback);
 
         RecyclerView races_list = findViewById(R.id.races_list);
@@ -122,9 +123,9 @@ public class ViewTrackActivity extends AppCompatActivity implements OnMapReadyCa
             @Override
             public void onClick(DialogInterface dialog, int which){
                 for(Long Id: races.getSelected()){
-                    racesTable.DeleteRace(Id);
+                    racesTable.Delete(Id);
                 }
-                races.setData(racesTable.getRaces(track.getId()));
+                races.setData(racesTable.getRacesByTrack(track.getId()));
                 races.getActionMode().finish();
             }
         });
@@ -185,8 +186,8 @@ public class ViewTrackActivity extends AppCompatActivity implements OnMapReadyCa
             googleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(m.getPosition(), 12f));
 
         PolylineOptions polylineOptions = new PolylineOptions();
-        for(Boa boa: track.getBoas())
-            polylineOptions.add(boa.getLatLng());
+        for(Waypoint waypoint: track.getWaypoints())
+            polylineOptions.add(waypoint.getBoa().getLatLng());
         polylineOptions.width(4f);
         polyline = googleMap.addPolyline(polylineOptions);
     }

@@ -35,7 +35,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         app:fabSize="mini"
-        android:layout_alignBottom="@id/add_track"
+        android:layout_alignBottom="@id/add_race"
         android:layout_alignParentRight="true"
         android:layout_marginRight="28dp"
         android:layout_marginBottom="80dp"

@@ -29,7 +29,7 @@ public class TracksFragment extends Fragment {
     public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.tracks_fragment,container,false);
 
-        tracks = new TracksAdapter(tracksTable.getTracks(), AMcallback);
+        this.tracks = new TracksAdapter(tracksTable.getTracks(), AMcallback);
 
         RecyclerView tracks_list = view.findViewById(R.id.tracks_list);
         tracks_list.setLayoutManager(new LinearLayoutManager(getContext()));
@@ -51,7 +51,7 @@ public class TracksFragment extends Fragment {
             @Override
             public void onClick(DialogInterface dialog, int which){
                 for(Long Id: tracks.getSelected()){
-                    tracksTable.DeleteTrack(Id);
+                    tracksTable.Delete(Id);
                 }
                 tracks.setData(tracksTable.getTracks());
                 tracks.getActionMode().finish();
@@ -68,12 +68,16 @@ public class TracksFragment extends Fragment {
         return view;
     }
 
+    public void RefreshTracks(){
+        this.tracks.setData(tracksTable.getTracks());
+        this.tracks.notifyDataSetChanged();
+        Log.w("tracks fragment","tracks updated");
+    }
+
     @Override
     public void onResume() {
         super.onResume();
-        tracks.setData(tracksTable.getTracks());
-        tracks.notifyDataSetChanged();
-        Log.w("tracks fragment","tracks updated");
+        this.RefreshTracks();
     }
 
     private ActionMode.Callback AMcallback = new ActionMode.Callback() {

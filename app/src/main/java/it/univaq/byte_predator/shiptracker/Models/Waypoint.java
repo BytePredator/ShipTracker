@@ -6,17 +6,17 @@ package it.univaq.byte_predator.shiptracker.Models;
 
 public class Waypoint {
     private long Id;
-    private long IdBoa;
-    private long IdTrack;
+    private Boa boa;
+    private long number;
 
-    public  Waypoint(long IdBoa, long IdTrack){
-        this(0, IdBoa, IdTrack);
+    public  Waypoint(Boa boa, long number){
+        this(0, boa, number);
     }
 
-    public Waypoint(long Id, long IdBoa, long IdTrack){
+    public Waypoint(long Id, Boa boa, long number){
         this.Id = Id;
-        this.IdBoa = IdBoa;
-        this.IdTrack = IdTrack;
+        this.boa = boa;
+        this.number = number;
     }
 
     public long getId() {
@@ -27,19 +27,19 @@ public class Waypoint {
         Id = id;
     }
 
-    public long getIdBoa() {
-        return IdBoa;
+    public Boa getBoa() {
+        return boa;
     }
 
-    public void setIdBoa(long idBoa) {
-        IdBoa = idBoa;
+    public void setBoa(Boa boa) {
+        this.boa = boa;
     }
 
-    public long getIdTrack() {
-        return IdTrack;
-    }
+    public long getNumber() { return number; }
 
-    public void setIdTrack(long idTrack) {
-        IdTrack = idTrack;
+    public void setNumber(long number) { this.number = number; }
+
+    public Waypoint clone(){
+        return new Waypoint(this.Id, this.boa, this.number);
     }
 }

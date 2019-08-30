@@ -78,15 +78,18 @@ public class TracksAdapter extends RecyclerView.Adapter<TracksAdapter.ViewHolder
         holder.Id = data.get(position).getId();
         String iName = data.get(position).getName();
         holder.name.setText(iName);
-        Integer iWaypoints = data.get(position).boasNumber();
+        Integer iWaypoints = data.get(position).waypointsNumber();
         holder.waypoints.setText(iWaypoints.toString());
         Double iDistance = data.get(position).getDistance();
         holder.distance.setText(String.format("%.3f Km",iDistance));
         Integer iTime = data.get(position).getBestTime();
-        Integer H = iTime/3600;
-        Integer M = iTime%3600/60;
-        Integer S = iTime%60;
-        holder.time.setText(H.toString()+":"+M.toString()+":"+S.toString());
+        if(iTime != 0) {
+            Integer H = iTime / 3600;
+            Integer M = iTime % 3600 / 60;
+            Integer S = iTime % 60;
+            holder.time.setText(H.toString() + ":" + M.toString() + ":" + S.toString());
+        }else
+            holder.time.setText("~");
         /*if(this.selected.contains(new Long(holder.Id)))
             holder.itemView.setBackgroundColor(getResources().getColor(R.color.colorSelected));
         else

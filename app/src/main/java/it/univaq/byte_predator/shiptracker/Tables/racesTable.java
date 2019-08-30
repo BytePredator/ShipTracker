@@ -14,6 +14,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 
 import it.univaq.byte_predator.shiptracker.Helper.DataCallback;
 import it.univaq.byte_predator.shiptracker.Helper.HelperDatabase;
@@ -31,13 +32,16 @@ public class racesTable {
     static private String TABLE = "races";
     static private String ID = "Id";
     static private String TRACK = "Track";
+    static private String TIME = "Time";
     static private String SYNC = "Sync";
     static private String DELETE = "Del";
+    static private String SERVER = "10.10.0.84";
 
     static public void CREATE(SQLiteDatabase db){
         String sql = "CREATE TABLE "+TABLE+" ( " +
                 ID+" INTEGER PRIMARY KEY AUTOINCREMENT, " +
                 TRACK+" INTEGER NOT NULL, " +
+                TIME+" INTEGER NOT NULL, " +
                 SYNC+" BOOLEAN NOT NULL DEFAULT 1, " +
                 DELETE+" BOOLEAN NOT NULL DEFAULT 0" +
                 ")";
@@ -51,27 +55,28 @@ public class racesTable {
 
     static public Race getRace(long Id){
         SQLiteDatabase db = HelperDatabase.getInstance().getReadableDatabase();
-        Cursor cursor = db.query(TABLE, new String[]{ID}, ID+"=?", new String[]{String.valueOf(Id)}, null, null, null, null);
+        Cursor cursor = db.query(TABLE, new String[]{ID, TIME}, ID+"=? AND "+DELETE+"=0", new String[]{String.valueOf(Id)}, null, null, null, null);
         if(cursor.moveToNext())
-            return genRace(cursor.getLong(0));
+            return genRace(cursor.getLong(0), cursor.getInt(1));
         return null;
     }
 
-    static public ArrayList<Race> getRaces(long trackId){
+    static public ArrayList<Race> getRacesByTrack(long trackId){
         SQLiteDatabase db = HelperDatabase.getInstance().getReadableDatabase();
         ArrayList<Race> r = new ArrayList<>();
-        Cursor cursor = db.query(TABLE, new String[]{ID}, TRACK+"=?", new String[]{String.valueOf(trackId)}, null, null, null, null);
+        Cursor cursor = db.query(TABLE, new String[]{ID, TIME}, TRACK+"=? AND "+DELETE+"=0", new String[]{String.valueOf(trackId)}, null, null, null, null);
         while (cursor.moveToNext())
-            r.add(genRace(cursor.getLong(0)));
+            r.add(genRace(cursor.getLong(0), cursor.getInt(1)));
+
         return r;
     }
 
     static public ArrayList<Race> getRaces(){
         SQLiteDatabase db = HelperDatabase.getInstance().getReadableDatabase();
         ArrayList<Race> r = new ArrayList<>();
-        Cursor cursor = db.query(TABLE, new String[]{ID}, null, null, null, null, null, null);
+        Cursor cursor = db.query(TABLE, new String[]{ID, TIME},  DELETE+"=0", null, null, null, null, null);
         while (cursor.moveToNext())
-            r.add(genRace(cursor.getLong(0)));
+            r.add(genRace(cursor.getLong(0), cursor.getInt(1)));
         return r;
     }
 
@@ -83,64 +88,68 @@ public class racesTable {
         return null;
     }
 
-    static private Race genRace(long Id){
-        return new Race(Id,  positionsTable.getPositionsByRace(Id));
+    static private Race genRace(long Id, int time){
+        return new Race(Id, time, positionsTable.getPositionsByRace(Id));
     }
 
     static public ArrayList<Race> getSync(){
         SQLiteDatabase db = HelperDatabase.getInstance().getReadableDatabase();
         ArrayList<Race> r = new ArrayList<>();
-        Cursor cursor = db.query(TABLE, new String[]{ID},
+        Cursor cursor = db.query(TABLE, new String[]{ID, TIME},
                 SYNC+"='?'",new String[]{"false"},null,null, ID);
         while(cursor.moveToNext())
-            r.add(genRace(cursor.getLong(0)));
+            r.add(genRace(cursor.getLong(0), cursor.getInt(1)));
         return r;
     }
 
-    static public long SaveRace(Race data, long TrackId){
-        return SaveRace(data, TrackId, false);
+    static public long Save(Race data, long TrackId){
+        return Save(data, TrackId, false);
     }
 
-    static public long SaveRace(Race data, long TrackId, boolean sync){
+    static public long Save(Race data, long TrackId, boolean sync){
         if(getRace(data.getId()) != null)
-            return UpdateRace(data, TrackId, sync);
+            return Update(data, TrackId, sync);
         else
-            return InsertRace(data, TrackId, sync);
+            return Insert(data, TrackId, sync);
     }
 
-    static public long UpdateRace(Race data, long TrackId){
-        return UpdateRace(data, TrackId, false);
+    static public long Update(Race data, long TrackId){
+        return Update(data, TrackId, false);
     }
 
-    static public long InsertRace(Race data, long TrackId){
-        return InsertRace(data, TrackId, false);
+    static public long Insert(Race data, long TrackId){
+        return Insert(data, TrackId, true);
     }
 
-    static private long UpdateRace(Race data, long TrackId, boolean sync){
+    static public long Update(Race data, long TrackId, boolean sync){
         SQLiteDatabase db = HelperDatabase.getInstance().getWritableDatabase();
         ContentValues values = new ContentValues();
+        values.put(ID, data.getId());
         values.put(TRACK, TrackId);
+        values.put(TIME, data.getTime());
         values.put(SYNC, sync);
-        Log.w("debug", "update race");
+        Log.w("raceTable", "update: "+data.getId()+" "+data.getTime());
         return db.update(TABLE, values, ID+" = ?", new String[]{String.valueOf(data.getId())});
     }
 
-    static private long InsertRace(Race data, long TrackId, boolean sync){
+    static public long Insert(Race data, long TrackId, boolean sync){
         SQLiteDatabase db = HelperDatabase.getInstance().getWritableDatabase();
         ContentValues values = new ContentValues();
+        values.put(ID, data.getId());
         values.put(TRACK, TrackId);
+        values.put(TIME, data.getTime());
         values.put(SYNC, sync);
-        Log.w("debug", "insert race");
+        Log.w("raceTable", "insert: "+data.getId()+" "+data.getTime());
         long Id = db.insert(TABLE, null, values);
         ArrayList<Point> points = data.getPoints();
-        for(Point point: points){
+        //for(Point point: points){
             //TODO: pointsTable.insertPoint
             //waypointsTable.InsertWaypoint(db, new Waypoint(point.getId(),Id));
-        }
+        //}
         return Id;
     }
 
-    static public int DeleteRace(long Id){
+    static public int Delete(long Id){
         SQLiteDatabase db = HelperDatabase.getInstance().getWritableDatabase();
         ContentValues values = new ContentValues();
         values.put(DELETE, true);
@@ -148,12 +157,23 @@ public class racesTable {
         return db.update(TABLE, values, ID+" = ?", new String[]{String.valueOf(Id)});
     }
 
+    static public long DeleteByTrack(long Id){
+        SQLiteDatabase db = HelperDatabase.getInstance().getWritableDatabase();
+        ContentValues values = new ContentValues();
+        values.put(DELETE, true);
+        values.put(SYNC, true);
+        return db.update(TABLE, values, TRACK+" = ?", new String[]{String.valueOf(Id)});
+    }
+
     static public void getFromServer(final Context context){
         getFromServer(context, null);
     }
 
     static public void getFromServer(final Context context, final DataCallback callback){
-        HelperHTTP.getInstance(context).RequestJSONObject("http://10.10.0.49/get.php?table=races", "GET",
+        HashMap<String, String> params = new HashMap<>();
+        params.put("table", "races");
+
+        HelperHTTP.getInstance(context).RequestJSONObject("http://"+SERVER+"/get.php", params, "POST",
                 new Response.Listener<JSONObject>() {
                     @Override
                     public void onResponse(JSONObject response) {
@@ -170,8 +190,7 @@ public class racesTable {
                                             JSONArray point = jpoints.getJSONArray(j);
                                             ra.addPoint(new Point(point.getLong(0),point.getDouble(1), point.getDouble(2), point.getInt(3)));
                                         }
-                                        UpdateRace(ra, item.getLong(1));
-                                        Log.w("raceModel", "update: "+String.valueOf(ra.getId()));
+                                        Update(ra, item.getLong(1));
                                     }else{
                                         ArrayList<Point> points = new ArrayList<>();
                                         JSONArray jpoints = item.getJSONArray(3);
@@ -180,9 +199,9 @@ public class racesTable {
                                             points.add(new Point(point.getLong(0),point.getDouble(1), point.getDouble(2), point.getInt(3)));
                                         }
                                         ra = new Race(item.getLong(0),
+                                                0,
                                                 points);
-                                        InsertRace(ra, item.getLong(1), true);
-                                        Log.w("raceModel", "insert: "+String.valueOf(ra.getId()));
+                                        Insert(ra, item.getLong(1), true);
                                     }
                                     r.add(ra);
                                 }

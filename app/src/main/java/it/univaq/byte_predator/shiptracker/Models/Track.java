@@ -1,5 +1,7 @@
 package it.univaq.byte_predator.shiptracker.Models;
 
+import android.util.Log;
+
 import java.util.ArrayList;
 
 /**
@@ -11,33 +13,38 @@ public class Track {
     private long Id;
     private String name;
     private Double distance;
-    private ArrayList<Boa> boas = new ArrayList<>();
+    private ArrayList<Waypoint> waypoints = new ArrayList<>();
     private ArrayList<Race> races = new ArrayList<>();
 
     public Track(long Id, String name){
-        this(Id, name, new ArrayList<Boa>());
+        this(Id, name, new ArrayList<Waypoint>());
     }
 
-    public Track(long Id, String name, ArrayList<Boa> boas){
+
+    public Track(long Id, String name, ArrayList<Waypoint> waypoints){ this(Id, name, waypoints, new ArrayList<Race>());}
+
+    public Track(long Id, String name, ArrayList<Waypoint> waypoints, ArrayList<Race> races){
         this.Id = Id;
         this.name = name;
         this.distance = 0d;
         Boa old = null;
-        for(Boa boa: boas){
-            Boa tmp = boa.clone();
-            this.boas.add(tmp);
+        for(Waypoint waypoint: waypoints){
+            Waypoint tmp = waypoint.clone();
+            this.waypoints.add(tmp);
             if(old != null)
-                this.distance += tmp.distance(old);
-            old = tmp;
+                this.distance += tmp.getBoa().distance(old);
+            old = tmp.getBoa();
         }
+        for(Race race: races)
+            this.races.add(race.clone());
     }
 
     public int getBestTime(){
-        int time = -1;
+        int time = 0;
         for (Race race: this.races )
-            if(time == -1 || race.getTime() < time)
+            if (race.getTime() > 0 && (time == 0 || race.getTime() < time))
                 time = race.getTime();
-        return time<0?0:time;
+        return time;
     }
 
     public long getId() { return Id; }
@@ -52,53 +59,76 @@ public class Track {
         this.name = name;
     }
 
-    public Integer boasNumber() {  return this.boas.size();  }
+    public Integer waypointsNumber() {  return this.waypoints.size();  }
 
     public Double getDistance() {  return this.distance;  }
 
-    public void addBoa(Boa boa){
-        this.boas.add(boa.clone());
-    }
-
-    public void removeBoa(int n){
-        if(n >= 0 && n < this.boas.size())
-            this.boas.remove(n);
-    }
-
-    public Boa getBoa(int n){
-        if(n >= 0 && n < this.boas.size())
-            return this.boas.get(n);
-        throw new IndexOutOfBoundsException();
+    public void addWaypoint(Waypoint waypoint){
+        this.waypoints.add(waypoint.clone());
     }
 
     public void addRace(Race race){
-        this.races.add(race);
+        this.races.add(race.clone());
     }
 
-    public ArrayList<Boa> getBoas(){
-        ArrayList<Boa> r = new ArrayList<>();
-        for(Boa boa:this.boas){
-            r.add(boa.clone());
+    public void removeWaypoint(int n){
+        if(n >= 0 && n < this.waypoints.size())
+            this.waypoints.remove(n);
+    }
+
+    public void removeRace(int n){
+        if(n >= 0 && n < this.races.size())
+            this.races.remove(n);
+    }
+
+    public Waypoint getWaypoint(int n){
+        if(n >= 0 && n < this.waypoints.size())
+            return this.waypoints.get(n);
+        throw new IndexOutOfBoundsException();
+    }
+
+    public Race getRace(int n){
+        if(n >= 0 && n < this.races.size())
+            return this.races.get(n);
+        throw new IndexOutOfBoundsException();
+    }
+
+    public ArrayList<Waypoint> getWaypoints(){
+        ArrayList<Waypoint> r = new ArrayList<>();
+        for(Waypoint waypoint:this.waypoints){
+            r.add(waypoint.clone());
+        }
+        return r;
+    }
+
+    public ArrayList<Race> getRaces(){
+        ArrayList<Race> r = new ArrayList<>();
+        for(Race race:this.races){
+            r.add(race.clone());
         }
         return r;
     }
 
     public ArrayList<Boa> getUniqueBoas(){
         ArrayList<Boa> r = new ArrayList<>();
-        for(Boa boa:this.boas){
+        for(Waypoint waypoint:this.waypoints){
             boolean f = false;
             for (Boa b: r)
-                if(b.getId() == boa.getId()){
+                if(b.getId() == waypoint.getBoa().getId()){
                     f = true;
                     break;
                 }
             if(!f)
-                r.add(boa.clone());
+                r.add(waypoint.getBoa().clone());
         }
         return r;
     }
 
-    public void clearBoas(){
-        this.boas.clear();
+    public void clearWaypoints(){
+        this.waypoints.clear();
+    }
+
+    public void clearRaces(){
+        this.races.clear();
     }
 }

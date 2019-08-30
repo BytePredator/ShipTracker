@@ -12,6 +12,9 @@ import com.android.volley.toolbox.Volley;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
+import java.util.HashMap;
+import java.util.Map;
+
 /**
  * Created by byte-predator on 21/02/18.
  */
@@ -31,6 +34,9 @@ public class HelperHTTP {
     }
 
     public void Request(String url, String method, Response.Listener<String> listener, Response.ErrorListener errorListener){
+        Request(url, new HashMap<String, String>(), method, listener, errorListener);
+    }
+    public void Request(String url, final HashMap<String, String> params, String method, Response.Listener<String> listener, Response.ErrorListener errorListener){
         int m = 0;
         switch (method){
             case "POST":
@@ -41,11 +47,19 @@ public class HelperHTTP {
                 break;
         }
 
-        StringRequest request = new StringRequest(m, url, listener, errorListener);
+        StringRequest request = new StringRequest(m, url, listener, errorListener) {
+            protected Map<String, String> getParams(){
+                return params;
+            }
+        };
         queue.add(request);
     }
 
     public void RequestJSONObject(String url, String method, Response.Listener<JSONObject> listener, Response.ErrorListener errorListener){
+        RequestJSONObject( url, new HashMap<String, String>(), method, listener, errorListener);
+    }
+
+    public void RequestJSONObject(String url, HashMap<String, String> params, String method, Response.Listener<JSONObject> listener, Response.ErrorListener errorListener){
         int m = 0;
         switch (method){
             case "POST":
@@ -56,7 +70,7 @@ public class HelperHTTP {
                 break;
         }
 
-        JsonObjectRequest request = new JsonObjectRequest(m, url, null, listener, errorListener);
+        JsonObjectRequest request = new JsonObjectRequest(m, url, new JSONObject(params), listener, errorListener);
         queue.add(request);
     }
 

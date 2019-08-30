@@ -26,8 +26,8 @@ public class TracesFragment extends Fragment {
         View view = inflater.inflate(R.layout.traces_fragment, container, false);
 
         ArrayList<Trace> data_traces = new ArrayList<>();
-        data_traces.add(new Trace(1,new Race(1, new ArrayList<Point>())));
-        data_traces.add(new Trace(2,new Race(2, new ArrayList<Point>())));
+        data_traces.add(new Trace(1,new Race(1, 0, new ArrayList<Point>())));
+        data_traces.add(new Trace(2,new Race(2, 0, new ArrayList<Point>())));
 
         TracesAdapter traces = new TracesAdapter(data_traces);
 

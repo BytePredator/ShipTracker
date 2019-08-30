@@ -1,5 +1,7 @@
 package it.univaq.byte_predator.shiptracker.Controllers.Race;
 
+import android.animation.ObjectAnimator;
+import android.animation.TypeEvaluator;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.drawable.Drawable;
@@ -8,7 +10,9 @@ import android.support.annotation.Nullable;
 import android.support.v4.app.NavUtils;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
+import android.util.Property;
 import android.view.MenuItem;
+import android.widget.SeekBar;
 
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
@@ -24,9 +28,11 @@ import com.google.android.gms.maps.model.PolylineOptions;
 
 import java.util.ArrayList;
 
+import it.univaq.byte_predator.shiptracker.Helper.LatLngInterpolator;
 import it.univaq.byte_predator.shiptracker.Models.Boa;
 import it.univaq.byte_predator.shiptracker.Models.Race;
 import it.univaq.byte_predator.shiptracker.Models.Track;
+import it.univaq.byte_predator.shiptracker.Models.Waypoint;
 import it.univaq.byte_predator.shiptracker.R;
 import it.univaq.byte_predator.shiptracker.Tables.racesTable;
 
@@ -37,6 +43,7 @@ public class ViewRaceActivity extends AppCompatActivity implements OnMapReadyCal
     private GoogleMap googleMap;
     private Bitmap boa_bitmap_default, boa_bitmap_next, boa_bitmap_done;
     private Polyline polyline;
+    private SeekBar seekBar;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -99,8 +106,8 @@ public class ViewRaceActivity extends AppCompatActivity implements OnMapReadyCal
             googleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(m.getPosition(), 12f));
 
         PolylineOptions polylineOptions = new PolylineOptions();
-        for(Boa boa: this.track.getBoas())
-            polylineOptions.add(boa.getLatLng());
+        for(Waypoint waypoint: this.track.getWaypoints())
+            polylineOptions.add(waypoint.getBoa().getLatLng());
         polylineOptions.width(4f);
         this.polyline = googleMap.addPolyline(polylineOptions);
     }
@@ -111,5 +118,24 @@ public class ViewRaceActivity extends AppCompatActivity implements OnMapReadyCal
         markerOptions.icon(BitmapDescriptorFactory.fromBitmap(boa_bitmap_default));
         markerOptions.flat(true).anchor(.5f, .5f);
         return markerOptions;
+    }
+
+    static private void animateMarker(Marker marker, LatLng finalPosition, final LatLngInterpolator latLngInterpolator, long duration) {
+        TypeEvaluator<LatLng> typeEvaluator = new TypeEvaluator<LatLng>() {
+            @Override
+            public LatLng evaluate(float fraction, LatLng startValue, LatLng endValue) {
+                return latLngInterpolator.interpolate(fraction, startValue, endValue);
+            }
+        };
+        Property<Marker, LatLng> property = Property.of(Marker.class, LatLng.class, "position");
+        ObjectAnimator animator = ObjectAnimator.ofObject(marker, property, typeEvaluator, finalPosition);
+        animator.setDuration(duration);
+        animator.start();
+    }
+
+    static private void animateSeekBar(SeekBar seekBar, int start, int stop, long duration) {
+        ObjectAnimator animator = ObjectAnimator.ofInt(seekBar, "progress", start, stop);
+        animator.setDuration(duration);
+        animator.start();
     }
 }
