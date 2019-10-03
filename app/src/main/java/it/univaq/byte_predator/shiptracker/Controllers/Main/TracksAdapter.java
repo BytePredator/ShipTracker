@@ -90,10 +90,10 @@ public class TracksAdapter extends RecyclerView.Adapter<TracksAdapter.ViewHolder
             holder.time.setText(H.toString() + ":" + M.toString() + ":" + S.toString());
         }else
             holder.time.setText("~");
-        /*if(this.selected.contains(new Long(holder.Id)))
-            holder.itemView.setBackgroundColor(getResources().getColor(R.color.colorSelected));
+        if(this.selected.contains(new Long(holder.Id)))
+            holder.itemView.setBackgroundColor(holder.itemView.getResources().getColor(R.color.colorSelected));
         else
-            holder.itemView.setBackgroundColor(Color.TRANSPARENT);*/
+            holder.itemView.setBackgroundColor(Color.TRANSPARENT);
     }
 
     @Override

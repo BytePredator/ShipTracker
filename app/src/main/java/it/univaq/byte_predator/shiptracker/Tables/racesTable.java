@@ -16,6 +16,7 @@ import org.json.JSONObject;
 import java.util.ArrayList;
 import java.util.HashMap;
 
+import it.univaq.byte_predator.shiptracker.Helper.CONF;
 import it.univaq.byte_predator.shiptracker.Helper.DataCallback;
 import it.univaq.byte_predator.shiptracker.Helper.HelperDatabase;
 import it.univaq.byte_predator.shiptracker.Helper.HelperHTTP;
@@ -35,7 +36,7 @@ public class racesTable {
     static private String TIME = "Time";
     static private String SYNC = "Sync";
     static private String DELETE = "Del";
-    static private String SERVER = "10.10.0.84";
+    static private String SERVER = CONF.SERVER;
 
     static public void CREATE(SQLiteDatabase db){
         String sql = "CREATE TABLE "+TABLE+" ( " +
@@ -78,6 +79,14 @@ public class racesTable {
         while (cursor.moveToNext())
             r.add(genRace(cursor.getLong(0), cursor.getInt(1)));
         return r;
+    }
+
+    static public Long getTrackIdByRaceId(long RaceId){
+        SQLiteDatabase db = HelperDatabase.getInstance().getReadableDatabase();
+        Cursor cursor = db.query(TABLE, new String[]{TRACK}, ID+"=?", new String[]{String.valueOf(RaceId)}, null, null, null, null);
+        if(cursor.moveToNext())
+            return cursor.getLong(0);
+        return null;
     }
 
     static public Track getTrackByRaceId(long RaceId){

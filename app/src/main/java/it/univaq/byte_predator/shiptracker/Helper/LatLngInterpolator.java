@@ -1,5 +1,7 @@
 package it.univaq.byte_predator.shiptracker.Helper;
 
+import android.util.Log;
+
 import com.google.android.gms.maps.model.LatLng;
 
 import static java.lang.Math.asin;

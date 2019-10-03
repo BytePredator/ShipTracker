@@ -1,13 +1,14 @@
 package it.univaq.byte_predator.shiptracker.Models;
 
-import com.google.android.gms.maps.model.LatLng;
-import com.google.android.gms.maps.model.Marker;
+import android.location.Location;
 
 /**
  * Created by byte-predator on 22/02/18.
  */
 
 public class Point extends LatLon{
+    public static final int THRESHOLD_DIST = 10;
+
     private long Id;
     private int time;
 
@@ -44,5 +45,15 @@ public class Point extends LatLon{
 
     public String toString(){
         return "[Id: "+this.Id+" Lat: "+this.latitude+" Lon: "+this.longitude+" time: "+this.time+"]";
+    }
+
+    public boolean inRange(Waypoint w){
+        Location l = new Location("");
+        Location l2 = new Location("");
+        l.setLatitude(this.latitude);
+        l.setLongitude(this.longitude);
+        l2.setLatitude(w.getBoa().getLatitude());
+        l2.setLongitude(w.getBoa().getLongitude());
+        return l.distanceTo(l2) < THRESHOLD_DIST;
     }
 }

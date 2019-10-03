@@ -7,6 +7,7 @@ import android.util.Log;
 
 import java.util.ArrayList;
 
+import it.univaq.byte_predator.shiptracker.Helper.CONF;
 import it.univaq.byte_predator.shiptracker.Helper.HelperDatabase;
 import it.univaq.byte_predator.shiptracker.Models.Boa;
 import it.univaq.byte_predator.shiptracker.Models.Point;
@@ -20,7 +21,7 @@ public class waypointsTable {
     static public String NUMBER = "number";
     static public String SYNC = "Sync";
     static public String DELETE = "Del";
-    static private String SERVER = "10.10.0.84";
+    static private String SERVER = CONF.SERVER;
 
 
     static public void CREATE(SQLiteDatabase db){

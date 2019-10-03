@@ -16,6 +16,7 @@ import org.json.JSONObject;
 import java.util.ArrayList;
 import java.util.HashMap;
 
+import it.univaq.byte_predator.shiptracker.Helper.CONF;
 import it.univaq.byte_predator.shiptracker.Helper.DataCallback;
 import it.univaq.byte_predator.shiptracker.Helper.HelperDatabase;
 import it.univaq.byte_predator.shiptracker.Helper.HelperHTTP;
@@ -35,7 +36,7 @@ public class tracksTable {
     static private String NAME = "Name";
     static private String SYNC = "Sync";
     static private String DELETE = "Del";
-    static private String SERVER = "10.10.0.84";
+    static private String SERVER = CONF.SERVER;
 
     static public void CREATE(SQLiteDatabase db){
         String sql = "CREATE TABLE "+TABLE+" ( " +

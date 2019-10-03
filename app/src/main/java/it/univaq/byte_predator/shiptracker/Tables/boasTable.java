@@ -16,6 +16,7 @@ import org.json.JSONObject;
 import java.util.ArrayList;
 import java.util.HashMap;
 
+import it.univaq.byte_predator.shiptracker.Helper.CONF;
 import it.univaq.byte_predator.shiptracker.Helper.DataCallback;
 import it.univaq.byte_predator.shiptracker.Helper.HelperDatabase;
 import it.univaq.byte_predator.shiptracker.Helper.HelperHTTP;
@@ -31,7 +32,7 @@ public class boasTable {
     static public String ID = "Id";
     static public String LATITUDE = "Latitude";
     static public String LONGITUDE = "Longitude";
-    static private String SERVER = "10.10.0.84";
+    static private String SERVER = CONF.SERVER;
 
 
     static public void CREATE(SQLiteDatabase db){

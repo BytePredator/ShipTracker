@@ -12,6 +12,7 @@ import android.view.ViewGroup;
 import android.widget.TextView;
 
 import it.univaq.byte_predator.shiptracker.Controllers.Race.ViewRaceActivity;
+import it.univaq.byte_predator.shiptracker.Helper.HelperTime;
 import it.univaq.byte_predator.shiptracker.R;
 import it.univaq.byte_predator.shiptracker.Models.Race;
 
@@ -72,11 +73,11 @@ public class RacesAdapter extends RecyclerView.Adapter<RacesAdapter.ViewHolder> 
     @Override
     public void onBindViewHolder(ViewHolder holder, int position) {
         holder.Id.setText(String.valueOf(data.get(position).getId()));
-        Integer iTime = data.get(position).getTime();
-        Integer H = iTime/3600;
-        Integer M = iTime%3600/60;
-        Integer S = iTime%60;
-        holder.time.setText(H.toString()+":"+M.toString()+":"+S.toString());
+        holder.time.setText(HelperTime.unix2str(data.get(position).getTime()));
+        if(this.selected.contains(new Long(data.get(position).getId())))
+            holder.itemView.setBackgroundColor(holder.itemView.getResources().getColor(R.color.colorSelected));
+        else
+            holder.itemView.setBackgroundColor(Color.TRANSPARENT);
     }
 
     @Override
