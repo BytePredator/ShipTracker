@@ -6,6 +6,7 @@ import android.graphics.Color;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.view.ActionMode;
 import android.support.v7.widget.RecyclerView;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -121,6 +122,9 @@ public class TracksAdapter extends RecyclerView.Adapter<TracksAdapter.ViewHolder
 
         @Override
         public void onClick(View v) {
+            for(int i=0; i<selected.size(); i++){
+                Log.w("tracks adapter", "id "+selected.get(i));
+            }
             if(selection){
                 if (toggleItem(this.Id))
                     v.setBackgroundColor(v.getContext().getResources().getColor(R.color.colorSelected));

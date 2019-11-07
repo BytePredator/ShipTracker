@@ -17,9 +17,8 @@ public class Point extends LatLon{
     }
 
     public Point(long Id, double latitude, double longitude, int time){
+        super(latitude, longitude);
         this.Id = Id;
-        this.latitude = latitude;
-        this.longitude = longitude;
         this.time = time;
     }
 
@@ -55,5 +54,17 @@ public class Point extends LatLon{
         l2.setLatitude(w.getBoa().getLatitude());
         l2.setLongitude(w.getBoa().getLongitude());
         return l.distanceTo(l2) < THRESHOLD_DIST;
+    }
+
+    public boolean isEqual(Point p){
+        if(this.getId() != p.getId())
+            return false;
+        if(this.getLatitude() != p.getLatitude())
+            return false;
+        if(this.getLongitude() != p.getLongitude())
+            return false;
+        if(this.getTime() != p.getTime())
+            return false;
+        return true;
     }
 }

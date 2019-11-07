@@ -428,7 +428,7 @@ public class ViewRaceActivity extends AppCompatActivity implements OnMapReadyCal
 
     class PositionsCallback  implements DataCallback<Point> {
         @Override
-        public void callback(ArrayList<Point> data) {
+        public void callback(ArrayList<Point> data, boolean changed) {
             race.setPoints(data);
             raceLoaded();
         }

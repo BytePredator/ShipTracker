@@ -14,6 +14,10 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+
+import java.util.ArrayList;
+
+import it.univaq.byte_predator.shiptracker.Models.Track;
 import it.univaq.byte_predator.shiptracker.R;
 import it.univaq.byte_predator.shiptracker.Tables.tracksTable;
 
@@ -65,13 +69,20 @@ public class TracksFragment extends Fragment {
         });
         this.dialog = builder.create();
 
+        ArrayList<Track> tracks_l = tracksTable.getTracks();
+        if(tracks_l.size()>0)
+            this.tracks.setData(tracks_l);
+        for(Track t : tracks_l)
+            Log.w("tracks fragment", "id: "+t.getId());
+        Log.w("tracks fragment", "created fragment "+tracks_l.size());
+
         return view;
     }
 
     public void RefreshTracks(){
         this.tracks.setData(tracksTable.getTracks());
         this.tracks.notifyDataSetChanged();
-        Log.w("tracks fragment","tracks updated");
+        Log.w("tracks fragment","tracks updated "+tracksTable.getTracks().size());
     }
 
     @Override

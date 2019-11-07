@@ -187,6 +187,7 @@ public class racesTable {
                     @Override
                     public void onResponse(JSONObject response) {
                         ArrayList<Race> r = new ArrayList<Race>();
+                        boolean changed = false;
                         try {
                             if(response.getInt("error")==0){
                                 JSONArray array = response.getJSONArray("data");
@@ -220,7 +221,7 @@ public class racesTable {
                             r = getRaces();
                         }
                         if(callback != null)
-                            callback.callback(r);
+                            callback.callback(r, changed);
                     }
                 },
                 new Response.ErrorListener() {

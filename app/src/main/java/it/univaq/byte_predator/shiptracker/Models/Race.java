@@ -275,4 +275,23 @@ public class Race {
         return r;
     }
 
+    public boolean isEqual(Race r){
+        if(this.getId() != r.getId())
+            return false;
+        if(this.getTime() != r.getTime())
+            return false;
+
+        for(Point p1 : this.points){
+            boolean f = false;
+            for(Point p2 : r.points)
+                if(p1.isEqual(p2)){
+                    f = true;
+                    break;
+                }
+            if(!f)
+                return false;
+        }
+        return true;
+    }
+
 }

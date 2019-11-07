@@ -111,6 +111,28 @@ public class waypointsTable {
         return db.update(TABLE, values, ID+" = ?", new String[]{String.valueOf(data.getId())});
     }
 
+    static public void updateId(long old, long id){
+        SQLiteDatabase db = HelperDatabase.getInstance().getWritableDatabase();
+        ContentValues values = new ContentValues();
+        values.put(ID, id);
+        db.update(TABLE, values, ID+" = ?", new String[]{String.valueOf(old)});
+    }
+
+    static public void updateTrackId(long old, long id){
+        SQLiteDatabase db = HelperDatabase.getInstance().getWritableDatabase();
+        ContentValues values = new ContentValues();
+        values.put(TRACK, id);
+        db.update(TABLE, values, TRACK+" = ?", new String[]{String.valueOf(old)});
+    }
+
+    static public void synced(long id){
+        SQLiteDatabase db = HelperDatabase.getInstance().getWritableDatabase();
+        ContentValues values = new ContentValues();
+        values.put(SYNC, false);
+        //values.put(NEW, false);
+        db.update(TABLE, values, ID+" = ?", new String[]{String.valueOf(id)});
+    }
+
     static public long Insert(Waypoint data, long TrackId, boolean sync){
         SQLiteDatabase db = HelperDatabase.getInstance().getWritableDatabase();
         ContentValues values = new ContentValues();
@@ -119,6 +141,7 @@ public class waypointsTable {
         values.put(BOA, data.getBoa().getId());
         values.put(TRACK, TrackId);
         values.put(NUMBER, data.getNumber());
+        values.put(SYNC, sync);
         Log.w("waypointTable", "insert: "+String.valueOf(data.getId()));
         return db.insert(TABLE, null, values);
     }

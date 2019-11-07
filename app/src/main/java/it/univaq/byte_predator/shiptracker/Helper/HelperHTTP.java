@@ -56,10 +56,13 @@ public class HelperHTTP {
     }
 
     public void RequestJSONObject(String url, String method, Response.Listener<JSONObject> listener, Response.ErrorListener errorListener){
-        RequestJSONObject( url, new HashMap<String, String>(), method, listener, errorListener);
+        RequestJSONObject( url, new JSONObject(), method, listener, errorListener);
+    }
+    public void RequestJSONObject(String url, HashMap<String, String> params, String method, Response.Listener<JSONObject> listener, Response.ErrorListener errorListener) {
+        RequestJSONObject( url, new JSONObject(params), method, listener, errorListener);
     }
 
-    public void RequestJSONObject(String url, HashMap<String, String> params, String method, Response.Listener<JSONObject> listener, Response.ErrorListener errorListener){
+    public void RequestJSONObject(String url, JSONObject params, String method, Response.Listener<JSONObject> listener, Response.ErrorListener errorListener){
         int m = 0;
         switch (method){
             case "POST":
@@ -70,7 +73,7 @@ public class HelperHTTP {
                 break;
         }
 
-        JsonObjectRequest request = new JsonObjectRequest(m, url, new JSONObject(params), listener, errorListener);
+        JsonObjectRequest request = new JsonObjectRequest(m, url, params, listener, errorListener);
         queue.add(request);
     }
 

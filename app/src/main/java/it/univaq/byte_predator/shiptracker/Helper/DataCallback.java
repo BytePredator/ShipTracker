@@ -7,5 +7,5 @@ import java.util.ArrayList;
  */
 
 public interface DataCallback<T>{
-     void callback(ArrayList<T> data);
+     void callback(ArrayList<T> data, boolean changed);
 }

@@ -183,6 +183,7 @@ public class positionsTable {
                     @Override
                     public void onResponse(JSONObject response) {
                         ArrayList<Point> p = new ArrayList<>();
+                        boolean changed = false;
                         try {
                             if(response.getInt("error")==0){
                                 JSONArray array = response.getJSONArray("data");
@@ -206,7 +207,7 @@ public class positionsTable {
                             p = getPositionsByRace(raceId);
                         }
                         if(callback != null)
-                            callback.callback(p);
+                            callback.callback(p, changed);
                     }
                 },
                 new Response.ErrorListener() {

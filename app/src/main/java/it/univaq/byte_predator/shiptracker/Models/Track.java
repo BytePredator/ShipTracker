@@ -2,6 +2,10 @@ package it.univaq.byte_predator.shiptracker.Models;
 
 import android.util.Log;
 
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import java.util.ArrayList;
 
 /**
@@ -31,8 +35,10 @@ public class Track {
         for(Waypoint waypoint: waypoints){
             Waypoint tmp = waypoint.clone();
             this.waypoints.add(tmp);
-            if(old != null)
+            if(old != null) {
                 this.distance += tmp.getBoa().distance(old);
+                Log.w("track", "d:"+tmp.getBoa().distance(old));
+            }
             old = tmp.getBoa();
         }
         for(Race race: races)
@@ -49,7 +55,7 @@ public class Track {
 
     public long getId() { return Id; }
 
-    public void setId(long Id) { this.Id = Id; }
+    public void setId(long Id) { this.Id = Id;}
 
     public String getName() {
         return name;
@@ -130,5 +136,59 @@ public class Track {
 
     public void clearRaces(){
         this.races.clear();
+    }
+
+    public Track clone(){
+        return new Track(this.Id, this.name, this.waypoints, this.races);
+    }
+
+    public boolean isEqual(Track t){
+        if(this.getId() != t.getId())
+            return false;
+        if(!this.getName().equals(t.getName()))
+            return false;
+        if(!this.getDistance().equals(t.getDistance()))
+            return false;
+        for(Waypoint w1 : this.waypoints){
+            boolean f = false;
+            for(Waypoint w2 : t.waypoints)
+                if(w1.isEqual(w2)){
+                    f = true;
+                    break;
+                }
+            if(!f)
+                return false;
+        }
+
+        for(Race r1 : this.races){
+            boolean f = false;
+            for(Race r2 : t.races)
+                if(r1.isEqual(r2)){
+                    f = true;
+                    break;
+                }
+            if(!f)
+                return false;
+        }
+
+        return true;
+    }
+
+    public JSONObject toJSON(){
+        JSONObject obj = new JSONObject();
+
+        try {
+            obj.accumulate("id", this.getId());
+            obj.accumulate("name", this.getName());
+            JSONArray arr = new JSONArray();
+            for (Waypoint waypoint: this.waypoints) {
+                arr.put(waypoint.toJSON());
+            }
+            obj.accumulate("waypoints", arr);
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+
+        return obj;
     }
 }

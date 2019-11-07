@@ -1,10 +1,13 @@
 package it.univaq.byte_predator.shiptracker.Controllers.Main;
 
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.design.widget.TabLayout;
+import android.support.v4.content.LocalBroadcastManager;
 import android.support.v4.view.ViewPager;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
@@ -18,6 +21,7 @@ import it.univaq.byte_predator.shiptracker.Helper.DataCallback;
 import it.univaq.byte_predator.shiptracker.Models.Boa;
 import it.univaq.byte_predator.shiptracker.Models.Track;
 import it.univaq.byte_predator.shiptracker.R;
+import it.univaq.byte_predator.shiptracker.Services.SyncService;
 import it.univaq.byte_predator.shiptracker.Tables.boasTable;
 import it.univaq.byte_predator.shiptracker.Tables.tracksTable;
 
@@ -37,7 +41,10 @@ public class MainActivity extends AppCompatActivity{
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        boasTable.getFromServer(this, new BoaCallback(this));
+        SyncReciver reciver = new SyncReciver();
+        LocalBroadcastManager.getInstance(this).registerReceiver(reciver, new IntentFilter(SyncService.SYNC_ACTION));
+
+        //boasTable.getFromServer(this, new BoaCallback(this));
 
         setContentView(R.layout.main_layout);
 
@@ -49,6 +56,11 @@ public class MainActivity extends AppCompatActivity{
         tabLayout = findViewById(R.id.tab);
         tabLayout.setupWithViewPager(pager);
 
+        Intent startIntent = new Intent(getApplicationContext(), SyncService.class);
+        startIntent.putExtra("action","init");
+        try {
+            startService(startIntent);
+        }catch (Exception e){}
     }
 
     @Override
@@ -77,7 +89,21 @@ public class MainActivity extends AppCompatActivity{
         }
     }
 
-    class BoaCallback implements DataCallback<Boa>{
+    public class SyncReciver extends BroadcastReceiver{
+
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            Log.w("main activity", "tracks updated");
+            int table = intent.getIntExtra("table", 0);
+            switch(table){
+                case SyncService.TRACKS:
+                    tabs.getTracksFragment().RefreshTracks();
+                    break;
+            }
+        }
+    }
+
+    /*class BoaCallback implements DataCallback<Boa>{
         private Context context;
 
         public BoaCallback(final Context context){
@@ -96,5 +122,5 @@ public class MainActivity extends AppCompatActivity{
         public void callback(ArrayList<Track> data) {
             tabs.getTracksFragment().RefreshTracks();
         }
-    }
+    }*/
 }

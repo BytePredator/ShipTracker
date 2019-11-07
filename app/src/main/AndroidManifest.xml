@@ -42,7 +42,8 @@
             android:name=".Controllers.Race.NewRaceActivity"
             android:parentActivityName=".Controllers.Track.ViewTrackActivity">
         </activity>
-        <service android:name=".Helper.HelperService"/>
+
+        <service android:name=".Services.SyncService"/>
     </application>
 
 </manifest>

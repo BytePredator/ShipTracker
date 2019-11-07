@@ -1,5 +1,7 @@
 package it.univaq.byte_predator.shiptracker.Models;
 
+import android.util.Log;
+
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 
@@ -17,9 +19,8 @@ public class Boa extends LatLon{
     }
 
     public Boa(long Id, double latitude, double longitude, Marker marker){
+        super(latitude, longitude);
         this.Id = Id;
-        this.latitude = latitude;
-        this.longitude = longitude;
         this.marker = marker;
     }
 
@@ -41,6 +42,16 @@ public class Boa extends LatLon{
 
     public Boa clone(){
         return new Boa(this.Id, this.latitude, this.longitude, this.marker);
+    }
+
+    public boolean isEqual(Boa b){
+        if(this.getLongitude() != b.getLongitude())
+            return false;
+        if(this.getLatitude() != b.getLatitude())
+            return false;
+        if(this.getId() != b.getId())
+            return false;
+        return true;
     }
 
     public String toString(){

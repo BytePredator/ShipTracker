@@ -8,6 +8,11 @@ public class LatLon {
     protected double latitude;
     protected double longitude;
 
+    public LatLon(double latitude, double longitude){
+        this.latitude = latitude;
+        this.longitude = longitude;
+    }
+
     public double getLatitude() {
         return latitude;
     }
@@ -24,7 +29,7 @@ public class LatLon {
         this.longitude = longitude;
     }
 
-    public LatLng getLatLng() { return new LatLng(latitude, longitude); }
+    public LatLng getLatLng(){ return new LatLng(latitude, longitude); }
 
     public double distance(LatLon b){
         double dLat  = Math.toRadians((b.latitude - this.latitude));

@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="title_activity_maps">Mappa</string>
-    <string name="races_tab_name">Corsa</string>
+    <string name="races_tab_name">Percorso</string>
     <string name="tracking_tab_name">Tracciato</string>
     <string name="settings">Impostazioni</string>
     <string name="logout">Esci</string>

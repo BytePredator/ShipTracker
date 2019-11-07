@@ -116,23 +116,29 @@ public class boasTable {
                     @Override
                     public void onResponse(JSONObject response) {
                         ArrayList<Boa> r = new ArrayList<>();
+                        boolean changed = false;
                         try {
-                            Log.w("responseBoa", response.toString());
+                            //Log.w("responseBoa", response.toString());
                             if(response.getInt("error")==0){
                                 JSONArray array = response.getJSONArray("data");
                                 for (int i=0; i<array.length(); i++) {
                                     JSONArray item = array.getJSONArray(i);
                                     Boa p;
                                     if((p = getBoa(item.getLong(0)))!=null){
+                                        Boa old_p = p.clone();
                                         p.setLatitude(item.getDouble(1));
                                         p.setLongitude(item.getDouble(2));
-                                        Update(p);
-                                        Log.w("boaModel", "update: "+String.valueOf(p.getId()));
+                                        if(!p.isEqual(old_p)){
+                                            Update(p);
+                                            changed = true;
+                                            Log.w("boaModel", "update: " + String.valueOf(p.getId()));
+                                        }
                                     }else{
                                         p = new Boa(item.getLong(0),
                                                 item.getDouble(1),
                                                 item.getDouble(2));
                                         Insert(p);
+                                        changed = true;
                                         Log.w("boaModel", "insert: "+String.valueOf(p.getId()));
                                     }
                                     r.add(p);
@@ -143,14 +149,14 @@ public class boasTable {
                             r = getBoas();
                         }
                         if(callback != null)
-                            callback.callback(r);
+                            callback.callback(r, changed);
                     }
                 },
                 new Response.ErrorListener() {
                     @Override
                     public void onErrorResponse(VolleyError error) {
                         if(callback != null)
-                            callback.callback(getBoas());
+                            callback.callback(getBoas(), false);
                     }
                 }
         );
