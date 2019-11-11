@@ -2,12 +2,15 @@ package it.univaq.byte_predator.shiptracker.Models;
 
 import android.location.Location;
 
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+
 /**
  * Created by byte-predator on 22/02/18.
  */
 
 public class Point extends LatLon{
-    public static final int THRESHOLD_DIST = 10;
 
     private long Id;
     private int time;
@@ -46,16 +49,6 @@ public class Point extends LatLon{
         return "[Id: "+this.Id+" Lat: "+this.latitude+" Lon: "+this.longitude+" time: "+this.time+"]";
     }
 
-    public boolean inRange(Waypoint w){
-        Location l = new Location("");
-        Location l2 = new Location("");
-        l.setLatitude(this.latitude);
-        l.setLongitude(this.longitude);
-        l2.setLatitude(w.getBoa().getLatitude());
-        l2.setLongitude(w.getBoa().getLongitude());
-        return l.distanceTo(l2) < THRESHOLD_DIST;
-    }
-
     public boolean isEqual(Point p){
         if(this.getId() != p.getId())
             return false;
@@ -66,5 +59,20 @@ public class Point extends LatLon{
         if(this.getTime() != p.getTime())
             return false;
         return true;
+    }
+
+    public JSONObject toJSON(){
+        JSONObject obj = new JSONObject();
+
+        try {
+            obj.accumulate("id", this.getId());
+            obj.accumulate("latitude", this.getLatitude());
+            obj.accumulate("longitude", this.getLongitude());
+            obj.accumulate("time", this.getTime());
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+
+        return obj;
     }
 }

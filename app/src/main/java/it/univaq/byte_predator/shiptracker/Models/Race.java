@@ -2,6 +2,10 @@ package it.univaq.byte_predator.shiptracker.Models;
 
 import android.util.Log;
 
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 
@@ -146,9 +150,11 @@ public class Race {
     }
 
     public void addPoint(Point point){
-        Point last = this.points.get(this.points.size()-1);
+        Point last = null;
+        if(this.points.size()>0)
+            last = this.points.get(this.points.size()-1);
         this.points.add(point.clone());
-        //this.time = point.getTime()-this.points.get(0).getTime();
+        this.time = point.getTime();//-this.points.get(0).getTime();
         if(last != null)
             this.distance += last.distance(point);
         if(this.inNewWaypoint(point)){
@@ -166,6 +172,8 @@ public class Race {
     }
 
     private boolean inNewWaypoint(Point p){
+        if(this.currentWaypoint>= this.waypoints.size())
+            return false;
         Waypoint waypoint = this.waypoints.get(this.currentWaypoint);
         return waypoint != null && p.inRange(waypoint);
     }
@@ -292,6 +300,24 @@ public class Race {
                 return false;
         }
         return true;
+    }
+
+    public JSONObject toJSON(){
+        JSONObject obj = new JSONObject();
+
+        try {
+            obj.accumulate("id", this.getId());
+            obj.accumulate("time", this.getTime());
+            JSONArray arr = new JSONArray();
+            for (Point point: this.points) {
+                arr.put(point.toJSON());
+            }
+            obj.accumulate("points", arr);
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+
+        return obj;
     }
 
 }

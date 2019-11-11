@@ -16,8 +16,10 @@ import java.util.TimerTask;
 
 import it.univaq.byte_predator.shiptracker.Helper.DataCallback;
 import it.univaq.byte_predator.shiptracker.Models.Boa;
+import it.univaq.byte_predator.shiptracker.Models.Point;
 import it.univaq.byte_predator.shiptracker.Models.Track;
 import it.univaq.byte_predator.shiptracker.Tables.boasTable;
+import it.univaq.byte_predator.shiptracker.Tables.positionsTable;
 import it.univaq.byte_predator.shiptracker.Tables.tracksTable;
 
 public class SyncService extends IntentService {
@@ -45,8 +47,11 @@ public class SyncService extends IntentService {
 
     public void pushAll(){
         ArrayList<Track> tracks = tracksTable.getSync();
+        ArrayList<Point> points = positionsTable.getSync();
         if(tracks.size()>0)
             tracksTable.sendToServer(getApplicationContext(), new TrackSyncCallback());
+        //else if(points.size()>0)
+         //   positionsTable.sendToServer(getApplicationContext());
         else
             this.pullAll();
     }
@@ -107,7 +112,12 @@ public class SyncService extends IntentService {
 
         @Override
         public void callback(ArrayList<JSONObject> res, boolean changed) {
-            //Log.w("sync tracks", res.toString());
+            try {
+                if(res.size()>0 && res.get(0).has("dbg"))
+                    Log.w("sync tracks", res.get(0).getString("dbg").toString());
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
             pullAll();
             /*if(changed) {
                 Intent broadcastIntent = new Intent();

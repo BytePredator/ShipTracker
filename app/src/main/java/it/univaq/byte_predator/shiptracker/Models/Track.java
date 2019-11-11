@@ -37,7 +37,6 @@ public class Track {
             this.waypoints.add(tmp);
             if(old != null) {
                 this.distance += tmp.getBoa().distance(old);
-                Log.w("track", "d:"+tmp.getBoa().distance(old));
             }
             old = tmp.getBoa();
         }
@@ -185,6 +184,11 @@ public class Track {
                 arr.put(waypoint.toJSON());
             }
             obj.accumulate("waypoints", arr);
+            arr = new JSONArray();
+            for (Race race: this.races) {
+                arr.put(race.toJSON());
+            }
+            obj.accumulate("races", arr);
         } catch (JSONException e) {
             e.printStackTrace();
         }

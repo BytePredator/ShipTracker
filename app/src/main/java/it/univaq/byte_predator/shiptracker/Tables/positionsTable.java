@@ -35,6 +35,7 @@ public class positionsTable {
     static private String LNG = "Longitude";
     static private String TIME = "Time";
     static private String SYNC = "Sync";
+    static private String NEW = "new";
     static private String DELETE = "Del";
     static private String SERVER = CONF.SERVER;
 
@@ -47,6 +48,7 @@ public class positionsTable {
                 LNG+" DOUBLE NOT NULL, " +
                 TIME+" timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP, " +
                 SYNC+" BOOLEAN NOT NULL DEFAULT 1, " +
+                NEW+" BOOLEAN NOT NULL DEFAULT 0," +
                 DELETE+" BOOLEAN NOT NULL DEFAULT 0" +
                 ")";
         db.execSQL(sql);
@@ -65,10 +67,14 @@ public class positionsTable {
         return null;
     }
 
-    static public ArrayList<Point> getPositionsByRace(long Id){     //TODO
+    static public ArrayList<Point> getPositionsByRace(long Id){
         SQLiteDatabase db = HelperDatabase.getInstance().getReadableDatabase();
         ArrayList<Point> points = new ArrayList<Point>();
-
+        Cursor cursor = db.query(TABLE, new String[]{ID, LAT, LNG, TIME}, DELETE+"=0 AND "+TYPE+"=1 AND "+REF+"=?", new String[]{String.valueOf(Id)}, null, null, null, null);
+        while(cursor.moveToNext()) {
+            //Log.w("positions table", "race: "+Id+" id:"+cursor.getLong(0));
+            points.add(genPosition(cursor.getLong(0), cursor.getDouble(1), cursor.getDouble(2), cursor.getInt(3)));
+        }
         return points;
     }
 
@@ -80,10 +86,40 @@ public class positionsTable {
         SQLiteDatabase db = HelperDatabase.getInstance().getReadableDatabase();
         ArrayList<Point> p = new ArrayList<>();
         Cursor cursor = db.query(TABLE, new String[]{ID, LAT, LNG, TIME},
-                SYNC+"='?'",new String[]{"false"},null,null, ID);
+                SYNC+"=?",new String[]{"true"},null,null, ID);
         while(cursor.moveToNext())
             p.add(genPosition(cursor.getLong(0), cursor.getDouble(1), cursor.getDouble(2), cursor.getInt(3)));
         return p;
+    }
+
+    static public ArrayList<Point> getSyncDel(){
+        SQLiteDatabase db = HelperDatabase.getInstance().getReadableDatabase();
+        ArrayList<Point> r = new ArrayList<>();
+        Cursor cursor = db.query(TABLE, new String[]{ID, LAT, LNG, TIME},
+                SYNC+"=1 AND "+DELETE+"=1",null,null,null, ID);
+        while(cursor.moveToNext())
+            r.add(genPosition(cursor.getLong(0), cursor.getDouble(1), cursor.getDouble(2), cursor.getInt(3)));
+        return r;
+    }
+
+    static public ArrayList<Point> getSyncNew(){
+        SQLiteDatabase db = HelperDatabase.getInstance().getReadableDatabase();
+        ArrayList<Point> r = new ArrayList<>();
+        Cursor cursor = db.query(TABLE, new String[]{ID, LAT, LNG, TIME},
+                SYNC+"=1 AND "+NEW+"=1",null,null,null, ID);
+        while(cursor.moveToNext())
+            r.add(genPosition(cursor.getLong(0), cursor.getDouble(1), cursor.getDouble(2), cursor.getInt(3)));
+        return r;
+    }
+
+    static public ArrayList<Point> getSyncEdit(){
+        SQLiteDatabase db = HelperDatabase.getInstance().getReadableDatabase();
+        ArrayList<Point> r = new ArrayList<>();
+        Cursor cursor = db.query(TABLE, new String[]{ID, LAT, LNG, TIME},
+                SYNC+"=1 AND "+DELETE+"=0 AND "+NEW+"=0",null,null,null, ID);
+        while(cursor.moveToNext())
+            r.add(genPosition(cursor.getLong(0), cursor.getDouble(1), cursor.getDouble(2), cursor.getInt(3)));
+        return r;
     }
 
     static public long Save(Point data, int type, long refId){
@@ -119,16 +155,34 @@ public class positionsTable {
         return db.update(TABLE, values, ID+" = ?", new String[]{String.valueOf(data.getId())});
     }
 
+    static private void updateId(long old, long id){
+        SQLiteDatabase db = HelperDatabase.getInstance().getWritableDatabase();
+        ContentValues values = new ContentValues();
+        values.put(ID, id);
+        db.update(TABLE, values, ID+" = ?", new String[]{String.valueOf(old)});
+        waypointsTable.updateTrackId(old, id);
+    }
+
+    static private void synced(long id){
+        SQLiteDatabase db = HelperDatabase.getInstance().getWritableDatabase();
+        ContentValues values = new ContentValues();
+        values.put(SYNC, false);
+        values.put(NEW, false);
+        db.update(TABLE, values, ID+" = ?", new String[]{String.valueOf(id)});
+    }
+
     static public long Insert(Point data, int type, long refId, boolean sync){
         SQLiteDatabase db = HelperDatabase.getInstance().getWritableDatabase();
         ContentValues values = new ContentValues();
-        values.put(ID, data.getId());
+        if(data.getId() != 0)
+            values.put(ID, data.getId());
         values.put(LAT, data.getLatitude());
         values.put(LNG, data.getLongitude());
         values.put(TIME, data.getTime());
         values.put(TYPE, type);
         values.put(REF, refId);
         values.put(SYNC, sync);
+        values.put(NEW, sync?true:false);
         Log.w("positionsTable", "insert: "+data.getId()+" "+data.getTime());
         return db.insert(TABLE, null, values);
     }
@@ -155,6 +209,11 @@ public class positionsTable {
         values.put(DELETE, true);
         values.put(SYNC, true);
         return db.update(TABLE, values, REF+" = ? AND "+TYPE+" = ?", new String[]{String.valueOf(refId), String.valueOf(type)});
+    }
+
+    static private void realDelete(long Id){
+        SQLiteDatabase db = HelperDatabase.getInstance().getWritableDatabase();
+        db.delete(TABLE, ID+"=?", new String[]{String.valueOf(Id)});
     }
 
     static public void getTraceFromServer(final Context context, long traceId){
@@ -217,5 +276,84 @@ public class positionsTable {
                     }
                 }
         );
+    }
+
+    static public void sendToServer(final Context context){
+        sendToServer(context, null);
+    }
+
+    static public void sendToServer(final Context context, final DataCallback callback){
+        JSONObject params = new JSONObject();
+        try {
+            params.accumulate("table", "positions");
+
+            JSONArray arr = new JSONArray();
+            for(Point point: positionsTable.getSyncNew()){
+                arr.put(point.toJSON());
+            }
+            params.accumulate("new",arr);
+
+            arr = new JSONArray();
+            for(Point point: positionsTable.getSyncEdit()){
+                arr.put(point.toJSON());
+            }
+            params.accumulate("edit",arr);
+
+            arr = new JSONArray();
+            for(Point point: positionsTable.getSyncDel()){
+                arr.put(point.toJSON());
+            }
+            params.accumulate("delete",arr);
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+
+        HelperHTTP.getInstance(context).RequestJSONObject("http://"+SERVER+"/set.php", params, "POST",new Response.Listener<JSONObject>() {
+            @Override
+            public void onResponse(JSONObject response) {
+                try {
+                    JSONObject data = response.getJSONObject("data");
+                    JSONArray added = data.getJSONArray("new");
+                    for(int i=0; i < added.length(); i++){
+                        JSONArray row = added.getJSONArray(i);
+                        long old = row.getLong(0);
+                        long id = row.getLong(1);
+                        if(old != id){
+                            updateId(old, id);
+                        }
+                        synced(id);
+                    }
+                    JSONArray waypoints = data.getJSONArray("waypoints");
+                    for(int i=0; i< waypoints.length(); i++){
+                        JSONArray row = waypoints.getJSONArray(i);
+                        long old = row.getLong(0);
+                        long id = row.getLong(1);
+                        if(old != id){
+                            Log.w("tracks table", "update waypoint id "+old+" to "+id);
+                            waypointsTable.updateId(old, id);
+                        }
+                        waypointsTable.synced(id);
+                    }
+                    JSONArray del   = data.getJSONArray("del");
+                    for(int i=0; i < del.length(); i++){
+                        realDelete(del.getLong(i));
+                    }
+
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+
+
+                ArrayList<JSONObject> arr = new ArrayList<>();
+                arr.add(response);
+                if(callback != null)
+                    callback.callback(arr, false);
+            }
+        }, new Response.ErrorListener() {
+            @Override
+            public void onErrorResponse(VolleyError error) {
+                Log.e("tracksTable", "send to server");
+            }
+        });
     }
 }

@@ -31,10 +31,11 @@ import it.univaq.byte_predator.shiptracker.Models.Waypoint;
 
 public class racesTable {
     static private String TABLE = "races";
-    static private String ID = "Id";
-    static private String TRACK = "Track";
+    static public String ID = "Id";
+    static public String TRACK = "Track";
     static private String TIME = "Time";
     static private String SYNC = "Sync";
+    static private String NEW = "New";
     static private String DELETE = "Del";
     static private String SERVER = CONF.SERVER;
 
@@ -44,7 +45,8 @@ public class racesTable {
                 TRACK+" INTEGER NOT NULL, " +
                 TIME+" INTEGER NOT NULL, " +
                 SYNC+" BOOLEAN NOT NULL DEFAULT 1, " +
-                DELETE+" BOOLEAN NOT NULL DEFAULT 0" +
+                DELETE+" BOOLEAN NOT NULL DEFAULT 0," +
+                NEW+" BOOLEAN NOT NULL DEFAULT 0" +
                 ")";
         db.execSQL(sql);
     }
@@ -98,6 +100,7 @@ public class racesTable {
     }
 
     static private Race genRace(long Id, int time){
+        Log.w("race table", "id:"+Id+" n: "+positionsTable.getPositionsByRace(Id));
         return new Race(Id, time, positionsTable.getPositionsByRace(Id));
     }
 
@@ -105,7 +108,37 @@ public class racesTable {
         SQLiteDatabase db = HelperDatabase.getInstance().getReadableDatabase();
         ArrayList<Race> r = new ArrayList<>();
         Cursor cursor = db.query(TABLE, new String[]{ID, TIME},
-                SYNC+"='?'",new String[]{"false"},null,null, ID);
+                SYNC+"=?",new String[]{"true"},null,null, ID);
+        while(cursor.moveToNext())
+            r.add(genRace(cursor.getLong(0), cursor.getInt(1)));
+        return r;
+    }
+
+    static public ArrayList<Race> getSyncDel(){
+        SQLiteDatabase db = HelperDatabase.getInstance().getReadableDatabase();
+        ArrayList<Race> r = new ArrayList<>();
+        Cursor cursor = db.query(TABLE, new String[]{ID,TIME},
+                SYNC+"=1 AND "+DELETE+"=1",null,null,null, ID);
+        while(cursor.moveToNext())
+            r.add(genRace(cursor.getLong(0), cursor.getInt(1)));
+        return r;
+    }
+
+    static public ArrayList<Race> getSyncNew(){
+        SQLiteDatabase db = HelperDatabase.getInstance().getReadableDatabase();
+        ArrayList<Race> r = new ArrayList<>();
+        Cursor cursor = db.query(TABLE, new String[]{ID,TIME},
+                SYNC+"=1 AND "+NEW+"=1",null,null,null, ID);
+        while(cursor.moveToNext())
+            r.add(genRace(cursor.getLong(0), cursor.getInt(1)));
+        return r;
+    }
+
+    static public ArrayList<Race> getSyncEdit(){
+        SQLiteDatabase db = HelperDatabase.getInstance().getReadableDatabase();
+        ArrayList<Race> r = new ArrayList<>();
+        Cursor cursor = db.query(TABLE, new String[]{ID,TIME},
+                SYNC+"=1 AND "+DELETE+"=0 AND "+NEW+"=0",null,null,null, ID);
         while(cursor.moveToNext())
             r.add(genRace(cursor.getLong(0), cursor.getInt(1)));
         return r;
@@ -138,23 +171,44 @@ public class racesTable {
         values.put(TIME, data.getTime());
         values.put(SYNC, sync);
         Log.w("raceTable", "update: "+data.getId()+" "+data.getTime());
-        return db.update(TABLE, values, ID+" = ?", new String[]{String.valueOf(data.getId())});
+        long r = db.update(TABLE, values, ID+" = ?", new String[]{String.valueOf(data.getId())});
+        for(Point p: data.getPoints()){
+            positionsTable.Save(p,1,data.getId(), sync);
+        }
+        return r;
+    }
+
+    static public void updateId(long old, long id){
+        /*SQLiteDatabase db = HelperDatabase.getInstance().getWritableDatabase();
+        ContentValues values = new ContentValues();
+        values.put(ID, id);
+        db.update(TABLE, values, ID+" = ?", new String[]{String.valueOf(old)});
+        //positionsTable.updateRaceId(old, id);*/
+    }
+
+    static public void synced(long id){
+        SQLiteDatabase db = HelperDatabase.getInstance().getWritableDatabase();
+        ContentValues values = new ContentValues();
+        values.put(SYNC, false);
+        values.put(NEW, false);
+        db.update(TABLE, values, ID+" = ?", new String[]{String.valueOf(id)});
     }
 
     static public long Insert(Race data, long TrackId, boolean sync){
         SQLiteDatabase db = HelperDatabase.getInstance().getWritableDatabase();
         ContentValues values = new ContentValues();
-        values.put(ID, data.getId());
+        if(data.getId() != 0)
+            values.put(ID, data.getId());
         values.put(TRACK, TrackId);
         values.put(TIME, data.getTime());
         values.put(SYNC, sync);
+        values.put(NEW, sync?true:false);
         Log.w("raceTable", "insert: "+data.getId()+" "+data.getTime());
         long Id = db.insert(TABLE, null, values);
         ArrayList<Point> points = data.getPoints();
-        //for(Point point: points){
-            //TODO: pointsTable.insertPoint
-            //waypointsTable.InsertWaypoint(db, new Waypoint(point.getId(),Id));
-        //}
+        for(Point point: points){
+            positionsTable.Insert(point, 1,data.getId(), sync);
+        }
         return Id;
     }
 
@@ -172,6 +226,11 @@ public class racesTable {
         values.put(DELETE, true);
         values.put(SYNC, true);
         return db.update(TABLE, values, TRACK+" = ?", new String[]{String.valueOf(Id)});
+    }
+
+    static private void realDelete(long Id){
+        SQLiteDatabase db = HelperDatabase.getInstance().getWritableDatabase();
+        db.delete(TABLE, ID+"=?", new String[]{String.valueOf(Id)});
     }
 
     static public void getFromServer(final Context context){

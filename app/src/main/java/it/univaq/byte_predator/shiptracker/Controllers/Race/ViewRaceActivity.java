@@ -82,8 +82,13 @@ public class ViewRaceActivity extends AppCompatActivity implements OnMapReadyCal
         long Id = getIntent().getLongExtra("Id", 0);
 
         this.race = racesTable.getRace(Id);
-        if(this.race.getPoints().size() == 0)
+        if(this.race.getPoints().size() == 0) {
+            Log.w("view race","loading points");
             this.loadRace();
+        }else{
+            Log.w("view race","found "+this.race.getPoints().size()+" points");
+            raceLoaded();
+        }
         this.track = this.race.track();
 
         setTitle(this.track.getName());
@@ -313,7 +318,8 @@ public class ViewRaceActivity extends AppCompatActivity implements OnMapReadyCal
             //this.ship.setPosition(current.getLatLng());
             this.ship.setRotation((float) HelperLatLng.bearingFrom2Points(current, next));
             this.marker_anim = this.animateMarker(this.ship, next.getLatLng(), new LatLngInterpolator.Spherical(), next.getTime() - this.race.getCurrentTime());
-            this.marker_anim.start();
+            if(this.marker_anim != null)
+                this.marker_anim.start();
         }else{
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
                 this.marker_anim.resume();
@@ -324,7 +330,8 @@ public class ViewRaceActivity extends AppCompatActivity implements OnMapReadyCal
         if(this.bar_anim == null) {
             int start_time = this.race.getPoint(0).getTime();
             this.bar_anim = this.animateSeekBar(this.seekBar, this.race.getCurrentTime() - start_time, next.getTime()- start_time, next.getTime() - this.race.getCurrentTime());
-            this.bar_anim.start();
+            if(this.bar_anim != null)
+                this.bar_anim.start();
         }else{
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
                 this.bar_anim.resume();
@@ -371,6 +378,8 @@ public class ViewRaceActivity extends AppCompatActivity implements OnMapReadyCal
     }
 
     private ObjectAnimator animateMarker(final Marker marker, final LatLng finalPosition, final LatLngInterpolator latLngInterpolator, long duration) {
+        if(duration<0)
+            return null;
         TypeEvaluator<LatLng> typeEvaluator = new TypeEvaluator<LatLng>() {
             @Override
             public LatLng evaluate(float fraction, LatLng startValue, LatLng endValue) {
@@ -414,6 +423,8 @@ public class ViewRaceActivity extends AppCompatActivity implements OnMapReadyCal
     }
 
     private ObjectAnimator animateSeekBar(SeekBar seekBar, final int start, int stop, final long duration) {
+        if(duration<0)
+            return null;
         ObjectAnimator animator = ObjectAnimator.ofInt(seekBar, "progress", start, stop);
         animator.setDuration(duration*1000);
         animator.setInterpolator(new TimeInterpolator() {

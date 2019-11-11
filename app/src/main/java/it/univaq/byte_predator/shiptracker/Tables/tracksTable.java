@@ -58,7 +58,7 @@ public class tracksTable {
 
     static public Track getTrackByRace(long Id){
         SQLiteDatabase db = HelperDatabase.getInstance().getReadableDatabase();
-        Cursor cursor = db.rawQuery("SELECT t."+ID+", t."+NAME+" FROM "+TABLE+" AS t LEFT JOIN races ON races.Id = t."+ID+" WHERE races.Id=?", new String[]{String.valueOf(Id)});
+        Cursor cursor = db.rawQuery("SELECT t."+ID+", t."+NAME+" FROM "+TABLE+" AS t LEFT JOIN races ON races."+racesTable.TRACK+" = t."+ID+" WHERE races."+racesTable.ID+"=?", new String[]{String.valueOf(Id)});
         if(cursor.moveToNext())
             return genTrack(cursor.getLong(0), cursor.getString(1));
         return null;
@@ -320,7 +320,7 @@ public class tracksTable {
                 new Response.ErrorListener() {
                     @Override
                     public void onErrorResponse(VolleyError error) {
-                        Log.e("tracksTable","get from server");
+                        Log.e("tracksTable","get from server: "+error.toString());
                     }
                 }
         );
@@ -381,6 +381,17 @@ public class tracksTable {
                             waypointsTable.updateId(old, id);
                         }
                         waypointsTable.synced(id);
+                    }
+                    JSONArray races = data.getJSONArray("races");
+                    for(int i=0; i< races.length(); i++){
+                        JSONArray row = races.getJSONArray(i);
+                        long old = row.getLong(0);
+                        long id = row.getLong(1);
+                        if(old != id){
+                            Log.w("tracks table", "update race id "+old+" to "+id);
+                            racesTable.updateId(old, id);
+                        }
+                        racesTable.synced(id);
                     }
                     JSONArray del   = data.getJSONArray("del");
                     for(int i=0; i < del.length(); i++){

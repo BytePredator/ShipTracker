@@ -40,5 +40,6 @@
         android:layout_marginRight="28dp"
         android:layout_marginBottom="80dp"
         android:src="@drawable/ic_edit_gray_24dp"
-        app:backgroundTint="@color/colorLightGray" />
+        app:backgroundTint="@color/colorLightGray"
+        android:visibility="gone"/>
 </RelativeLayout>
